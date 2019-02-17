@@ -19,7 +19,8 @@ single = []
 welcome = ['''CKH ASCII Art [版本 2019.02.17 03:39]
 (R) 2019 CKH Group。保留所有权利。
 C:\\Users\\Lance>''', 'F', 'ighting']
-frame = (784, 512)
+frame = (512 * 2, 512 * 2)
+frame_char = 460 * 2
 
 
 class Point:
@@ -48,10 +49,11 @@ class Single:
                 self.filled = self.filled + 1
         split = self.chars.split('\n')
         count = 0
+        fix = frame_char // 46
         for y in range(len(split)):
             for x in range(len(split[y])):
                 if not split[y][x] == char_blank:
-                    self.points.append(Point(x=x, y=y, char=split[y][x], to_index=count))
+                    self.points.append(Point(x=x*fix, y=y*fix, char=split[y][x], to_index=count))
                     count = count + 1
 
     def __str__(self):
@@ -214,29 +216,21 @@ def make_point():
 def patch_animation(img_src, points: list, sindex: int, frame_count: int = 30):
     patch = []
 
-    """
-    if len(points) < single[sindex].filled:
-        points = points[:sindex]
-    if len(points) > single[sindex].filled:
-        for i in range(len(points) - single[sindex].filled + 1):
-            points.append(make_point())
-
-    if len(points) != single[sindex].filled:
-        print("ERROR #1")
-    """
+    fun = lambda x: (1 / (frame_count - x) + 0.8)
+    fix = 0.9
 
     for i in range(frame_count):
         img_res = draw_one(img_src, points)
         patch.append(img_res.copy())
         for p in range(len(points)):
-            points[p].x = points[p].x + (single[sindex].points[points[p].to_index].x - points[p].x) // frame_count
-            points[p].y = points[p].y + (single[sindex].points[points[p].to_index].y - points[p].y) // frame_count
+            points[p].x = int(points[p].x + (single[sindex].points[points[p].to_index].x - points[p].x + 1) / (frame_count / 10))
+            points[p].y = int(points[p].y + (single[sindex].points[points[p].to_index].y - points[p].y + 1) / (frame_count / 10))
 
     return patch
 
 
 def make_animation():
-    writer = imageio.get_writer('anima/animation.mp4', 'ffmpeg', fps=60)
+    writer = imageio.get_writer('anima/animation.mp4', 'ffmpeg', fps=30)
 
     count = len(single[0].points)
     points = []
@@ -247,14 +241,13 @@ def make_animation():
 
     for s in trange(len(single)):
         points = set_to_index(points)
-        patch = patch_animation(im, points=points, sindex=s, frame_count=30)
+        patch = patch_animation(im, points=points, sindex=s, frame_count=15)
         for p in patch:
             writer.append_data(np.array(p))
         if s != len(single) - 1:
             points = copy.deepcopy(single[s+1].points)
 
     writer.close()
-
 
 
 def make_animation_test():
@@ -283,7 +276,8 @@ def make_animation_test():
     writer.close()
 
 
-font = ImageFont.truetype("YaheiMono.ttf", 42)
+# font = ImageFont.truetype("YaheiMono.ttf", 10)
+font = ImageFont.truetype("msyhbd.ttc", 20)
 blank = Image.new("RGBA", (1920 * 4, 1080 * 4), color="white")
 
 
@@ -293,6 +287,6 @@ if __name__ == '__main__':
 
     # form_images()
 
-    # form_video()
+    form_video()
 
-    make_animation()
+    # make_animation()
